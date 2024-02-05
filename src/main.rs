@@ -99,10 +99,10 @@ fn prove_equality(
     let rng = &mut test_rng();
 
     let h_power: BigUint = rng.sample(RandomBits::new(256));
-
     let secp256_g = secp256k1::G1Affine::generator();
     let secp256_h = secp256_g.mul_bigint(h_power.to_u64_digits()).into_affine();
 
+    let h_power: BigUint = rng.sample(RandomBits::new(256));
     let bls_g = bls12_381::g1::G1Affine::generator();
     let bls_h = bls_g.mul_bigint(h_power.to_u64_digits()).into_affine();
 
