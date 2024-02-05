@@ -1,0 +1,17 @@
+[package]
+name = "equality-check-across-groups"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ark-ec = "0.4.2"
+ark-ff = "0.4.2"
+ark-std = { version = "0.4.0", features = [ "getrandom" ] }
+ark-test-curves = { version = "0.4.2", features = [ "bls12_381_curve", "secp256k1" ] }
+hex = "0.4.3"
+num-bigint = { version = "0.4.4", features = [ "rand" ] }
+
+[env]
+DETERMINISTIC_TEST_RNG = 0
