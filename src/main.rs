@@ -1,8 +1,8 @@
 use ark_test_curves::{bls12_381, secp256k1, FpConfig};
-use num_bigint::{BigUint, RandomBits};
+use num_bigint::{BigUint, RandBigInt, RandomBits};
 use ark_ec::{AffineRepr, CurveGroup, Group};
 use std::{cmp::Ordering, ops::{Add, Mul}};
-use ark_std::{rand::Rng, test_rng, UniformRand, Zero};
+use ark_std::{rand::Rng, test_rng, One, UniformRand};
 use ark_ff::{Fp, MontBackend, PrimeField};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
@@ -26,14 +26,14 @@ fn main() {
     //     prove_equality(x);
     // }
 
-    let zero = BigUint::zero();
-    for _ in 0..100  {
+    let one = BigUint::one();
+    for _ in 0..10000  {
         let x: BigUint = rng.sample(RandomBits::new(BIT_X as u64));
         let coin = rng.gen_range(0..100);
         if coin % 2 == 0 {
-            prove_or(x.clone(), zero.clone(), x.clone());
+            prove_or(x.clone(), one.clone(), x.clone());
         } else {
-            prove_or(zero.clone(), x, zero.clone());
+            prove_or(one.clone(), x, one.clone());
         }
     }
 }
@@ -185,7 +185,7 @@ fn hex_string_to_binary_vector(hex_str: &str) -> Vec<bool> {
         .collect()
 }
 
-fn prove_or (
+fn prove_or(
     x: BigUint,
     target1: BigUint,
     target2: BigUint,
@@ -309,14 +309,16 @@ fn generate_or_proof<GP: AffineRepr, GQ: AffineRepr, P: FpConfig<N>, Q: FpConfig
     let rng = &mut test_rng();
 
     let c1: BigUint = rng.sample(RandomBits::new(BIT_C as u64));
-
     let k2: BigUint = rng.sample(RandomBits::new((BIT_C + BIT_X + BIT_F) as u64));
     let t_p2 = Fp::<P, N>::rand(rng);
     let t_q2 = Fp::<Q, N>::rand(rng);
     let k_p2 = pedersen_commit::<GP>(g_p, h_p, k2.clone().to_u64_digits(), t_p2.into_bigint());
     let k_q2 = pedersen_commit::<GQ>(g_q, h_q, k2.clone().to_u64_digits(), t_q2.into_bigint());
 
-    let z1: BigUint = rng.sample(RandomBits::new((BIT_C + BIT_X + BIT_F) as u64));
+    let z_low = BigUint::from(2u8).pow(BIT_X + BIT_C);
+    let z_high = BigUint::from(2u8).pow(BIT_C + BIT_X + BIT_F) - BigUint::from(1u64);
+
+    let z1: BigUint = rng.gen_biguint_range(&z_low, &z_high);
 
     let t_p1 = Fp::<P, N>::rand(rng);
     let t_q1 = Fp::<Q, N>::rand(rng);
@@ -349,9 +351,6 @@ fn generate_or_proof<GP: AffineRepr, GQ: AffineRepr, P: FpConfig<N>, Q: FpConfig
     let s_q2 = r_q2 * c_q2 + t_q2;
 
     let z2 = c2.clone().mul(x.clone()) + k2.clone();
-
-    let z_low = BigUint::from(2u8).pow(BIT_X + BIT_C);
-    let z_high = BigUint::from(2u8).pow(BIT_C + BIT_X + BIT_F) - BigUint::from(1u64);
 
     assert!(z1.cmp(&z_low) > Ordering::Less);
     assert!(z1.cmp(&z_high) < Ordering::Greater);
